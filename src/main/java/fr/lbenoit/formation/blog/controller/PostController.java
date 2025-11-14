@@ -3,7 +3,9 @@ package fr.lbenoit.formation.blog.controller;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import fr.lbenoit.formation.blog.dto.CommentDto;
 import fr.lbenoit.formation.blog.dto.PostDto;
+import fr.lbenoit.formation.blog.model.Comment;
 import fr.lbenoit.formation.blog.model.Post;
 import fr.lbenoit.formation.blog.persistence.PostRepository;
 import jakarta.inject.Inject;
@@ -35,6 +37,10 @@ public class PostController {
         dto.setId(entity.getId());
         dto.setTitre(entity.getTitre());
         dto.setContenu(entity.getContenu());
+        dto.setCommentaires(entity.getCommentaires()
+                .stream()
+                .map(this::toCommentDto)
+                .collect(Collectors.toList()));
         return dto;
     }
 
@@ -45,12 +51,35 @@ public class PostController {
         Post entity = new Post();
         entity.setTitre(dto.getTitre());
         entity.setContenu(dto.getContenu());
+        dto.getCommentaires().forEach(commentDto -> {
+            Comment comment = toCommentEntity(commentDto, entity);
+            entity.getCommentaires().add(comment);
+        });
+        return entity;
+    }
+
+    private CommentDto toCommentDto(Comment entity) {
+        if (entity == null) {
+            return null;
+        }
+        CommentDto dto = new CommentDto();
+        dto.setId(entity.getId());
+        dto.setAuteur(entity.getAuteur());
+        dto.setContenu(entity.getContenu());
+        return dto;
+    }
+
+    private Comment toCommentEntity(CommentDto dto, Post post) {
+        Comment entity = new Comment();
+        entity.setAuteur(dto.getAuteur());
+        entity.setContenu(dto.getContenu());
+        entity.setPost(post);
         return entity;
     }
 
     @GET
-    @Path("/")
     @Produces(MediaType.APPLICATION_JSON)
+    @Transactional
     public List<PostDto> all() {
         return repository.listAll()
                 .stream()
@@ -61,6 +90,7 @@ public class PostController {
     @GET
     @Path("/{id}")
     @Produces(MediaType.APPLICATION_JSON)
+    @Transactional
     public PostDto getById(@PathParam("id") Long id) {
         return repository.findByIdOptional(id)
                 .map(this::toDto)
@@ -68,7 +98,6 @@ public class PostController {
     }
 
     @POST
-    @Path("/")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Transactional
@@ -79,7 +108,6 @@ public class PostController {
     }
 
     @PUT
-    @Path("/")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Transactional
@@ -90,6 +118,11 @@ public class PostController {
         }
         existing.setTitre(dto.getTitre());
         existing.setContenu(dto.getContenu());
+        existing.getCommentaires().clear();
+        dto.getCommentaires().forEach(commentDto -> {
+            Comment comment = toCommentEntity(commentDto, existing);
+            existing.getCommentaires().add(comment);
+        });
         return toDto(existing);
     }
 

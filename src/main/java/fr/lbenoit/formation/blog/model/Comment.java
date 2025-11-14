@@ -1,29 +1,29 @@
 package fr.lbenoit.formation.blog.model;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 @Entity
-@Table(name = "post")
-public class Post {
+@Table(name = "comment")
+public class Comment {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String titre;
+    private String auteur;
 
     private String contenu;
 
-    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Comment> commentaires = new ArrayList<>();
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "post_id")
+    private Post post;
 
     public Long getId() {
         return id;
@@ -33,12 +33,12 @@ public class Post {
         this.id = id;
     }
 
-    public String getTitre() {
-        return titre;
+    public String getAuteur() {
+        return auteur;
     }
 
-    public void setTitre(String titre) {
-        this.titre = titre;
+    public void setAuteur(String auteur) {
+        this.auteur = auteur;
     }
 
     public String getContenu() {
@@ -49,12 +49,11 @@ public class Post {
         this.contenu = contenu;
     }
 
-    public List<Comment> getCommentaires() {
-        return commentaires;
+    public Post getPost() {
+        return post;
     }
 
-    public void setCommentaires(List<Comment> commentaires) {
-        this.commentaires = commentaires;
+    public void setPost(Post post) {
+        this.post = post;
     }
-
 }
