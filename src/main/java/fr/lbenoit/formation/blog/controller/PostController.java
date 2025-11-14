@@ -49,6 +49,7 @@ public class PostController {
     }
 
     @GET
+    @Path("/")
     @Produces(MediaType.APPLICATION_JSON)
     public List<PostDto> all() {
         return repository.listAll()
@@ -67,6 +68,7 @@ public class PostController {
     }
 
     @POST
+    @Path("/")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Transactional
@@ -77,6 +79,7 @@ public class PostController {
     }
 
     @PUT
+    @Path("/")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Transactional
