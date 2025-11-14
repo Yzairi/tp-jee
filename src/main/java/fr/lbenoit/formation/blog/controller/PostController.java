@@ -1,73 +1,102 @@
 package fr.lbenoit.formation.blog.controller;
 
-import java.util.Collection;
-import java.util.HashMap;
+import java.util.List;
+import java.util.stream.Collectors;
 
+import fr.lbenoit.formation.blog.dto.PostDto;
 import fr.lbenoit.formation.blog.model.Post;
-import fr.lbenoit.formation.blog.persistence.PostEO;
+import fr.lbenoit.formation.blog.persistence.PostRepository;
 import jakarta.inject.Inject;
-import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
+import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.MediaType;
-
+import jakarta.ws.rs.core.Response;
 
 @Path("/posts")
 public class PostController {
 
     @Inject
-    EntityManager em;
+    PostRepository repository;
 
-    HashMap<Integer, Post> table = new HashMap<>();
+    private PostDto toDto(Post entity) {
+        if (entity == null) {
+            return null;
+        }
+        PostDto dto = new PostDto();
+        dto.setId(entity.getId());
+        dto.setTitre(entity.getTitre());
+        dto.setContenu(entity.getContenu());
+        return dto;
+    }
 
-    public PostController() {
-        Post p = new Post();
-        p.setId(12);
-        p.setTitre("Mon  titre");
-        p.setContenu("Mon contenu");
+    private Post toEntity(PostDto dto) {
+        if (dto == null) {
+            return null;
+        }
+        Post entity = new Post();
+        entity.setTitre(dto.getTitre());
+        entity.setContenu(dto.getContenu());
+        return entity;
+    }
 
-        table.put(12, p);
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    public List<PostDto> all() {
+        return repository.listAll()
+                .stream()
+                .map(this::toDto)
+                .collect(Collectors.toList());
     }
 
     @GET
     @Path("/{id}")
     @Produces(MediaType.APPLICATION_JSON)
-    public Post getBillet(@PathParam("id") int identifiant) {
-        return table.get(identifiant);
-    
+    public PostDto getById(@PathParam("id") Long id) {
+        return repository.findByIdOptional(id)
+                .map(this::toDto)
+                .orElseThrow(() -> new WebApplicationException("Post not found", Response.Status.NOT_FOUND));
     }
 
     @POST
+    @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Transactional
-    public Post creerBillet(Post nouveauBillet) {
-        PostEO billet = new PostEO();
-        // ....
-        // Enregistrement
-        em.persist(billet);
-        nouveauBillet.setId(billet.getId().intValue());
-        return nouveauBillet;
-    
+    public PostDto create(PostDto dto) {
+        Post entity = toEntity(dto);
+        repository.persist(entity);
+        return toDto(entity);
     }
 
-
-    @GET
+    @PUT
+    @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Collection<Post> getTousBillet() {
-        return table.values();
+    @Transactional
+    public PostDto update(@QueryParam("id") Long id, PostDto dto) {
+        Post existing = repository.findById(id);
+        if (existing == null) {
+            throw new WebApplicationException("Post not found", Response.Status.NOT_FOUND);
+        }
+        existing.setTitre(dto.getTitre());
+        existing.setContenu(dto.getContenu());
+        return toDto(existing);
     }
-
 
     @DELETE
-    @Path("/{id}")
-    @Produces(MediaType.APPLICATION_JSON)
-    public void supprimerBillet(@PathParam("id") int identifiant) {
-        table.remove(identifiant);
+    @Transactional
+    public void delete(@QueryParam("id") Long id) {
+        Post existing = repository.findById(id);
+        if (existing == null) {
+            throw new WebApplicationException("Post not found", Response.Status.NOT_FOUND);
+        }
+        repository.delete(existing);
     }
-
 }

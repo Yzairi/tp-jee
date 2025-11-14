@@ -1,19 +1,8 @@
-package fr.lbenoit.formation.blog.persistence;
+package fr.lbenoit.formation.blog.dto;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-
-@Entity
-@Table(name="post")
-public class PostEO {
-    @Id
-    @GeneratedValue
+public class PostDto {
     private Long id;
-
     private String titre;
-
     private String contenu;
 
     public Long getId() {
@@ -39,5 +28,4 @@ public class PostEO {
     public void setContenu(String contenu) {
         this.contenu = contenu;
     }
-
 }
